@@ -1,0 +1,12 @@
+admin
+hello
+password
+welcome
+student
+college
+computer
+security
+dragon
+sunshine
+login
+letmein

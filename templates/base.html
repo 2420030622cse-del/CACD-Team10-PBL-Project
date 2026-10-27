@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="/">
+    <title>Brute Force Attack Simulator | Cybersecurity Lab</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/runtime-config.js') }}"></script>
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Subtle Animated Background Elements -->
+    <div class="cyber-bg">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Navigation Header -->
+        <header class="cyber-header">
+            <div class="logo">
+                <a href="{{ url_for('index') }}">
+                    <i class="fa-solid fa-shield-halved cyber-icon"></i>
+                    <span>CYBER<span class="highlight">FORCE</span></span>
+                </a>
+                <span class="badge">SIMULATOR v1.0</span>
+            </div>
+            <nav class="cyber-nav">
+                <a href="{{ url_for('index') }}" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                    <i class="fa-solid fa-house"></i> Home
+                </a>
+                <a href="{{ url_for('attacks') }}" class="nav-link {% if request.path == '/attacks' %}active{% endif %}">
+                    <i class="fa-solid fa-circle-nodes"></i> Attack Methods
+                </a>
+                <a href="{{ url_for('configure') }}" class="nav-link {% if request.path == '/configure' %}active{% endif %}">
+                    <i class="fa-solid fa-sliders"></i> Configure
+                </a>
+            </nav>
+        </header>
+
+        <!-- Main Page Content -->
+        <main class="cyber-main">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="cyber-footer">
+            <div class="footer-divider"></div>
+            <p class="disclaimer">
+                <i class="fa-solid fa-triangle-exclamation warning-icon"></i>
+                <strong>Educational Simulation Only:</strong>                 This application only simulates guesses against the test password you provide. When using a separately hosted backend, the password is sent to that backend for analysis; breach checks use HIBP k-anonymity and send only a short hash prefix.
+            </p>
+            <p class="copyright">&copy; 2026 CyberForce Lab. Powered by scikit-learn and Flask.</p>
+        </footer>
+    </div>
+
+    <!-- Global JS Navigation Helper -->
+    <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

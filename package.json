@@ -1,0 +1,14 @@
+{
+  "name": "minilang-compiler-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:compiler": "tsc -p tsconfig.json",
+    "check:compiler": "tsc -p tsconfig.json --noEmit",
+    "test:compiler": "node --test compiler/minilang.test.mjs",
+    "test": "npm run test:compiler"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

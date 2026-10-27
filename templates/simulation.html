@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="simulation-container animate-fade-in">
+    <!-- Active Status Bar -->
+    <div class="sim-header">
+        <div class="sim-header-info">
+            <span class="cyber-tag pulsing-red"><span class="red-dot"></span> LIVE SIMULATION</span>
+            <h2>
+                {% if method == 'brute_force' %}
+                    🔨 BRUTE FORCE
+                {% elif method == 'dictionary' %}
+                    📖 DICTIONARY
+                {% elif method == 'rule_based' %}
+                    🧩 RULE-BASED
+                {% elif method == 'hybrid' %}
+                    🔀 HYBRID
+                {% endif %}
+                ATTACK on <span class="highlight">{{ ptype }}</span> Password
+            </h2>
+        </div>
+        <div id="simulation-badge-status" class="status-badge badge-running">RUNNING</div>
+    </div>
+
+    <!-- Main Visual Panels -->
+    <div class="sim-grid">
+        <!-- Center Console: Guess and Controls -->
+        <div class="sim-console-panel">
+            <div class="console-box" id="guess-display-box">
+                <span class="box-label">CURRENT GUESS</span>
+                <div class="guess-text" id="current-guess-text">------</div>
+                <div class="guess-status-indicator" id="guess-status-indicator">
+                    <span class="status-icon"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                    <span class="status-lbl" id="guess-status-label">TRYING NEXT COMBINATION...</span>
+                </div>
+            </div>
+
+            {% if method == 'rule_based' %}
+            <div class="rule-live-panel" aria-live="polite">
+                <div><span>METHOD</span><strong>Rule Based</strong></div>
+                <div><span>TYPE</span><strong>{{ ptype.title() }}</strong></div>
+                <div><span>BASE WORD</span><strong id="rule-base-word">—</strong></div>
+                <div><span>CURRENT RULE</span><strong id="rule-current-rule">—</strong></div>
+                <div><span>RULES ENABLED</span><strong id="rule-enabled-count">0</strong></div>
+                <div><span>STATUS</span><strong id="rule-search-status">Searching...</strong></div>
+            </div>
+            <p class="rule-education-note">Rule-based guessing does not explore every possible password. It tests candidates created by the selected patterns and transformations.</p>
+            {% endif %}
+
+            <!-- Dashboard controls -->
+            <div class="control-actions">
+                <button id="btn-pause-resume" class="btn-control btn-pause">
+                    <i class="fa-solid fa-pause"></i> <span class="lbl">PAUSE</span>
+                </button>
+                <button id="btn-stop" class="btn-control btn-stop">
+                    <i class="fa-solid fa-stop"></i> <span class="lbl">STOP</span>
+                </button>
+                <button id="btn-restart" class="btn-control btn-restart">
+                    <i class="fa-solid fa-rotate-left"></i> <span class="lbl">RESTART</span>
+                </button>
+                <button id="btn-finish-redirect" class="btn-primary btn-report-go hidden">
+                    <i class="fa-solid fa-file-invoice"></i> VIEW SECURITY REPORT
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Side: Stats Panel -->
+        <div class="sim-stats-panel">
+            <div class="glass-section stats-box">
+                <h3><i class="fa-solid fa-chart-simple"></i> ATTACK STATISTICS</h3>
+                <div class="stats-table">
+                    <div class="stats-row">
+                        <span class="lbl">Attack Method</span>
+                        <span class="val font-mono" id="stat-method">
+                            {% if method == 'brute_force' %}Brute Force{% elif method == 'dictionary' %}Dictionary{% elif method == 'rule_based' %}Rule-Based{% elif method == 'hybrid' %}Hybrid{% endif %}
+                        </span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="lbl">Password Type</span>
+                        <span class="val font-mono" id="stat-ptype">{{ ptype }}</span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="lbl">Total Attempts</span>
+                        <span class="val font-mono highlight" id="stat-attempts">0</span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="lbl">Candidate Length</span>
+                        <span class="val font-mono" id="stat-length">-</span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="lbl">Attempts / Second</span>
+                        <span class="val font-mono text-cyan" id="stat-speed">{{ speed }}</span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="lbl">Elapsed Time</span>
+                        <span class="val font-mono" id="stat-time">0.0 sec</span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="lbl">Theoretical Space</span>
+                        <span class="val font-mono text-dim" id="stat-space">{{ formatted_space }}</span>
+                    </div>
+                </div>
+
+                <!-- Progress Section -->
+                <div class="progress-container">
+                    <div class="progress-text-row">
+                        <span>Simulated Search Progress:</span>
+                        <span id="progress-percent-label">0.00%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Log Console -->
+    <div class="sim-log-grid">
+        <div class="glass-section log-console-section">
+            <h3><i class="fa-solid fa-terminal"></i> LIVE ATTEMPT LOG</h3>
+            <div class="log-console-header">
+                <span class="col-attempt">ATTEMPT</span>
+                <span class="col-guess">GUESS</span>
+                <span class="col-result">RESULT</span>
+            </div>
+            <div class="log-console-lines" id="log-console-lines">
+                <!-- Lines will be dynamically generated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="sim-charts-grid">
+        <div class="glass-section chart-card">
+            <h3><i class="fa-solid fa-chart-area"></i> Search Space growth</h3>
+            <p class="chart-desc">Shows how increasing password length exponentially grows combinations.</p>
+            <div class="chart-wrapper">
+                <canvas id="lengthGrowthChart"></canvas>
+            </div>
+        </div>
+        <div class="glass-section chart-card">
+            <h3><i class="fa-solid fa-chart-line"></i> Attack Progress Trace</h3>
+            <p class="chart-desc">Plots attempts checked against elapsed time during this run.</p>
+            <div class="chart-wrapper">
+                <canvas id="progressTraceChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Variables sent by Flask to orchestrate client execution
+    window.SIM_METHOD = "{{ method }}";
+    window.SIM_TYPE = "{{ ptype }}";
+    window.SIM_SPEED = parseInt("{{ speed }}");
+    window.SIM_MAX_ATTEMPTS = parseInt("{{ max_attempts }}");
+    window.SIM_MAX_TIME = parseInt("{{ max_time }}");
+    window.THEORETICAL_SPACE = parseInt("{{ search_space }}");
+    window.SIM_CHARSET = null;
+    window.SIM_RULES = {{ rule_ids|default([], true)|tojson }};
+    window.SIM_MAX_RULES = {{ max_rules|default(2, true)|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/simulator.js') }}"></script>
+{% endblock %}

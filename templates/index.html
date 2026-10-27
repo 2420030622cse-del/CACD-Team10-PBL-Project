@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="landing-hero animate-fade-in">
+    <div class="hero-header">
+        <span class="cyber-tag"><i class="fa-solid fa-terminal"></i> LAB_ENVIRONMENT</span>
+        <h1 class="hero-title font-title">BRUTE FORCE ATTACK SIMULATOR</h1>
+        <h2 class="hero-subtitle">Explore Password Security Through Interactive Attack Simulation</h2>
+    </div>
+
+    <div class="hero-desc-container">
+        <p class="hero-desc">
+            Understand how different password structures respond to different password-guessing techniques. 
+            Analyze complexity scaling, watch real-time simulated attacks, and learn how machine learning models 
+            evaluate password security risk.
+        </p>
+    </div>
+
+    <div class="hero-cta">
+        <a href="{{ url_for('attacks') }}" class="btn-primary glow-btn">
+            <span class="btn-text">START SIMULATION</span>
+            <i class="fa-solid fa-chevron-right btn-arrow"></i>
+        </a>
+    </div>
+
+    <div class="lab-features">
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fa-solid fa-gauge-high"></i></div>
+            <h3>Four Attack Simulators</h3>
+            <p>Compare Brute Force, Dictionary, Rule-Based, and Hybrid methodologies under controlled speeds.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <h3>Real-Time Metrics</h3>
+            <p>Analyze search space size, attempts, elapsed time, and cracking progress in real time.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fa-solid fa-brain"></i></div>
+            <h3>Machine Learning Ratings</h3>
+            <p>Evaluate your test passwords across five distinct dimensions using Random Forest Classifiers.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

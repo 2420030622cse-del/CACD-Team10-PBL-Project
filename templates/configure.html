@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="configure-container animate-fade-in">
+    <!-- Selected Method Header -->
+    <div class="method-selected-header">
+        <div class="method-header-main">
+            <span class="header-label">SELECTED ATTACK METHOD</span>
+            <div class="selected-method-display">
+                {% if method == 'brute_force' %}
+                    <span class="method-title">🔨 BRUTE FORCE ATTACK</span>
+                {% elif method == 'dictionary' %}
+                    <span class="method-title">📖 DICTIONARY ATTACK</span>
+                {% elif method == 'rule_based' %}
+                    <span class="method-title">🧩 RULE-BASED ATTACK</span>
+                {% elif method == 'password_safety' %}
+                    <span class="method-title">🛡️ PASSWORD SAFETY ANALYSIS</span>
+                {% elif method == 'hybrid' %}
+                    <span class="method-title">🔀 HYBRID ATTACK</span>
+                {% else %}
+                    <span class="method-title">🔨 BRUTE FORCE ATTACK</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="method-actions action-panel">
+            {% if method == 'password_safety' %}
+            <p class="section-hint">Password Safety Analysis is not an attack simulation. Enter a test password and use Analyze Password below.</p>
+            {% endif %}
+            <button id="btn-analyze-password" class="btn-secondary analyze-btn action-reveal">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span class="btn-label">Analyze Password</span>
+            </button>
+            <button id="btn-clear-data" class="btn-secondary clear-btn action-reveal">
+                <i class="fa-solid fa-broom"></i>
+                <span class="btn-label">Clear Sensitive Data</span>
+            </button>
+            <button id="btn-start-attack" class="btn-primary start-attack-btn glow-btn disabled action-reveal" disabled>
+                <i class="fa-solid fa-circle-play"></i>
+                <span class="btn-label">START ATTACK SIMULATION</span>
+            </button>
+            <a href="{{ url_for('attacks') }}" class="btn-secondary back-btn action-reveal">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span class="btn-label">Change Method</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="configure-grid">
+        <!-- Configuration Form Left Side -->
+        <div class="config-left-panel">
+            <div class="glass-section">
+                <h3>🎯 Select Password Type</h3>
+                <div class="type-selectors">
+                    <div class="type-card active" data-type="PIN">
+                        <div class="type-icon">🔢</div>
+                        <div class="type-details">
+                            <h4>PIN</h4>
+                            <p>Exactly 6 digits</p>
+                        </div>
+                    </div>
+                    <div class="type-card" data-type="TEXT">
+                        <div class="type-icon">🔤</div>
+                        <div class="type-details">
+                            <h4>TEXT</h4>
+                            <p>8–20 characters, based on letters</p>
+                        </div>
+                    </div>
+                    <div class="type-card" data-type="MIX">
+                        <div class="type-icon">🔐</div>
+                        <div class="type-details">
+                            <h4>MIX</h4>
+                            <p>8–20 characters with a number and symbol</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-section">
+                <h3>🔑 Enter Test Password</h3>
+                <p class="section-hint">The password is kept temporarily in this browser tab and sent to the configured analysis backend when you run a check or simulation. Do not enter a password you use for another account.</p>
+                <div class="input-group">
+                    <input type="password" id="test-password" placeholder="Enter password to test..." autocomplete="off">
+                    <button type="button" id="toggle-password" class="btn-icon">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                
+                <!-- Live Validation Output -->
+                <div class="validation-panel">
+                    <h4>PASSWORD REQUIREMENTS</h4>
+                    <ul id="requirements-list" class="reqs-list">
+                        <!-- Filled by JS -->
+                    </ul>
+                    <div id="validation-status" class="validation-status status-invalid">
+                        STATUS: ENTER PASSWORD
+                    </div>
+                </div>
+            </div>
+            
+            <div class="glass-section">
+                <h3>⚙️ Configure Limits (Optional)</h3>
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label for="max-attempts">Max Attempts</label>
+                        <input type="number" id="max-attempts" value="{% if method == 'brute_force' %}0{% else %}10000{% endif %}" min="0" max="10000000">
+                    </div>
+                    <div class="setting-item">
+                        <label for="max-time">Max Time (Seconds)</label>
+                        <input type="number" id="max-time" value="{% if method == 'brute_force' %}0{% else %}60{% endif %}" min="0" max="300">
+                    </div>
+                    <div class="setting-item">
+                        <label for="simulation-speed">Speed (Guesses/sec)</label>
+                        <select id="simulation-speed">
+                            <option value="1">1 (Slow-motion)</option>
+                            <option value="10">10 (Visual tracing)</option>
+                            <option value="120" selected>120 (Standard simulation)</option>
+                            <option value="500">500 (Turbo)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {% if method == 'rule_based' %}
+            <div class="glass-section rule-config-section" id="rule-config-panel">
+                <h3>🧩 Rule Configuration</h3>
+                <p class="section-hint">Choose predictable transformations and their order. Duplicate candidates are tested once.</p>
+                <div class="setting-item max-rule-setting">
+                    <label for="max-rules">Maximum transformations per candidate</label>
+                    <input type="number" id="max-rules" value="{{ max_rules }}" min="1" max="4">
+                </div>
+                <div class="rule-category" id="pin-rule-list" data-rule-type="PIN">
+                    <h4>PIN RULES</h4>
+                    <ol class="rule-options">
+                        <li><label><input type="checkbox" value="reverse" checked><span>Reverse digits</span></label><span class="rule-order-controls"><button type="button" aria-label="Move reverse rule up" data-move="up">↑</button><button type="button" aria-label="Move reverse rule down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="sequential" checked><span>Sequential pattern</span></label><span class="rule-order-controls"><button type="button" aria-label="Move sequential rule up" data-move="up">↑</button><button type="button" aria-label="Move sequential rule down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="repeated" checked><span>Repeated digits</span></label><span class="rule-order-controls"><button type="button" aria-label="Move repeated rule up" data-move="up">↑</button><button type="button" aria-label="Move repeated rule down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="prefix_zero" checked><span>Prefix 0</span></label><span class="rule-order-controls"><button type="button" aria-label="Move prefix rule up" data-move="up">↑</button><button type="button" aria-label="Move prefix rule down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="suffix_zero" checked><span>Append 0</span></label><span class="rule-order-controls"><button type="button" aria-label="Move suffix rule up" data-move="up">↑</button><button type="button" aria-label="Move suffix rule down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="position" checked><span>Change final digit</span></label><span class="rule-order-controls"><button type="button" aria-label="Move position rule up" data-move="up">↑</button><button type="button" aria-label="Move position rule down" data-move="down">↓</button></span></li>
+                    </ol>
+                </div>
+                <div class="rule-category hidden" id="text-rule-list" data-rule-type="TEXT">
+                    <h4>TEXT RULES</h4>
+                    <ol class="rule-options">
+                        <li><label><input type="checkbox" value="lowercase" checked><span>Lowercase</span></label><span class="rule-order-controls"><button type="button" aria-label="Move lowercase rule up" data-move="up">↑</button><button type="button" aria-label="Move lowercase rule down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="capitalize" checked><span>Capitalize</span></label><span class="rule-order-controls"><button type="button" aria-label="Move capitalize rule up" data-move="up">↑</button><button type="button" aria-label="Move capitalize rule down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="uppercase" checked><span>Uppercase</span></label><span class="rule-order-controls"><button type="button" aria-label="Move uppercase rule up" data-move="up">↑</button><button type="button" aria-label="Move uppercase rule down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="reverse" checked><span>Reverse</span></label><span class="rule-order-controls"><button type="button" aria-label="Move reverse rule up" data-move="up">↑</button><button type="button" aria-label="Move reverse rule down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="number_prefix" checked><span>Number prefix</span></label><span class="rule-order-controls"><button type="button" aria-label="Move number prefix up" data-move="up">↑</button><button type="button" aria-label="Move number prefix down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="number_suffix" checked><span>Number suffix</span></label><span class="rule-order-controls"><button type="button" aria-label="Move number suffix up" data-move="up">↑</button><button type="button" aria-label="Move number suffix down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="symbol_prefix" checked><span>Symbol prefix</span></label><span class="rule-order-controls"><button type="button" aria-label="Move symbol prefix up" data-move="up">↑</button><button type="button" aria-label="Move symbol prefix down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="symbol_suffix" checked><span>Symbol suffix</span></label><span class="rule-order-controls"><button type="button" aria-label="Move symbol suffix up" data-move="up">↑</button><button type="button" aria-label="Move symbol suffix down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="substitution" checked><span>Character substitution (a→@, e→3, i→1, o→0, s→$)</span></label><span class="rule-order-controls"><button type="button" aria-label="Move substitution rule up" data-move="up">↑</button><button type="button" aria-label="Move substitution rule down" data-move="down">↓</button></span></li>
+                    </ol>
+                </div>
+                <div class="rule-category hidden" id="mix-rule-list" data-rule-type="MIX">
+                    <h4>MIXED RULES</h4>
+                    <ol class="rule-options">
+                        <li><label><input type="checkbox" value="capitalize" checked><span>Capitalize</span></label><span class="rule-order-controls"><button type="button" aria-label="Move capitalize rule up" data-move="up">↑</button><button type="button" aria-label="Move capitalize rule down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="substitution" checked><span>Character substitution</span></label><span class="rule-order-controls"><button type="button" aria-label="Move substitution rule up" data-move="up">↑</button><button type="button" aria-label="Move substitution rule down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="number_prefix" checked><span>Number prefix</span></label><span class="rule-order-controls"><button type="button" aria-label="Move number prefix up" data-move="up">↑</button><button type="button" aria-label="Move number prefix down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="number_suffix" checked><span>Number suffix</span></label><span class="rule-order-controls"><button type="button" aria-label="Move number suffix up" data-move="up">↑</button><button type="button" aria-label="Move number suffix down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="symbol_prefix" checked><span>Symbol prefix</span></label><span class="rule-order-controls"><button type="button" aria-label="Move symbol prefix up" data-move="up">↑</button><button type="button" aria-label="Move symbol prefix down" data-move="down">↓</button></span></li>
+                        <li><label><input type="checkbox" value="symbol_suffix" checked><span>Symbol suffix</span></label><span class="rule-order-controls"><button type="button" aria-label="Move symbol suffix up" data-move="up">↑</button><button type="button" aria-label="Move symbol suffix down" data-move="down">↓</button></span></li>
+                    </ol>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- AI Preview Right Side -->
+        <div class="config-right-panel">
+            <div class="glass-section ai-preview-section">
+                <div class="ai-header-panel">
+                    <i class="fa-solid fa-brain ai-brain-icon pulsing-glow"></i>
+                    <h3>AI Password Preview</h3>
+                </div>
+                <p class="ai-section-desc">Once you enter a valid password meeting the selected type rules, our Random Forest Classifiers will run a preliminary assessment.</p>
+                
+                <div id="ai-preview-loader" class="ai-loader hidden">
+                    <div class="spinner"></div>
+                    <p>Extracting security features...</p>
+                </div>
+                
+                <div id="ai-preview-placeholder" class="ai-placeholder">
+                    <i class="fa-solid fa-lock-open placeholder-icon"></i>
+                    <p>Enter a valid password to run AI feature extraction and rating models.</p>
+                </div>
+
+                <div id="ai-preview-content" class="ai-preview-content hidden">
+                    <table class="ai-preview-table">
+                        <tbody>
+                            <tr>
+                                <td>🛡️ Security Strength</td>
+                                <td><span id="preview-strength" class="preview-badge badge-neutral">PENDING</span></td>
+                            </tr>
+                            <tr>
+                                <td>🧠 Memorability</td>
+                                <td><span id="preview-memorability" class="preview-badge badge-neutral">PENDING</span></td>
+                            </tr>
+                            <tr>
+                                <td>🎲 Randomness</td>
+                                <td><span id="preview-randomness" class="preview-badge badge-neutral">PENDING</span></td>
+                            </tr>
+                            <tr>
+                                <td>🧩 Pattern Safety</td>
+                                <td><span id="preview-pattern" class="preview-badge badge-neutral">PENDING</span></td>
+                            </tr>
+                            <tr>
+                                <td>⌨️ Typing Usability</td>
+                                <td><span id="preview-typing" class="preview-badge badge-neutral">PENDING</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="entropy-display">
+                        <span class="entropy-label">Shannon Entropy:</span>
+                        <span id="preview-entropy" class="entropy-val">0.00 bits</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-section security-analysis-section">
+                <div class="security-header-row">
+                    <h3>SECURITY ANALYSIS</h3>
+                    <span class="security-tag">Backend + HIBP</span>
+                </div>
+
+                <div class="security-panel-grid">
+                    <div class="security-card">
+                        <h4>Password Strength Analysis — zxcvbn</h4>
+                        <div id="strength-status" class="status-pill neutral">Analyzing password...</div>
+
+                        <div class="metric-row">
+                            <span>Score:</span>
+                            <strong id="security-score">—</strong>
+                        </div>
+                        <div class="metric-row">
+                            <span>Strength:</span>
+                            <strong id="security-label">—</strong>
+                        </div>
+                        <div class="metric-row">
+                            <span>Estimated Guesses:</span>
+                            <strong id="security-guesses">—</strong>
+                        </div>
+                        <div class="metric-row">
+                            <span>Crack Time:</span>
+                            <strong id="security-crack-time">—</strong>
+                        </div>
+                        <div class="metric-row">
+                            <span>Offline Crack Time:</span>
+                            <strong id="security-offline-time">—</strong>
+                        </div>
+                        <div class="security-warning" id="strength-warning">No analysis yet.</div>
+                        <ul class="security-suggestions" id="strength-suggestions"></ul>
+                    </div>
+
+                    <div class="security-card">
+                        <h4>Breach Exposure</h4>
+                        <div id="hibp-status-pill" class="status-pill neutral">Checking breach exposure...</div>
+                        <div class="metric-row">
+                            <span>Status:</span>
+                            <strong id="hibp-status">—</strong>
+                        </div>
+                        <div class="metric-row">
+                            <span>Times Seen:</span>
+                            <strong id="hibp-count">0</strong>
+                        </div>
+                        <div class="security-warning" id="hibp-message">Waiting for password analysis.</div>
+                    </div>
+                </div>
+
+                <p class="security-note">Your password is sent to the configured backend for analysis. For breach checks, only the first 5 characters of its SHA-1 hash are sent to HIBP.</p>
+                <p class="security-note secondary-note">These four attack methods are local simulations for learning only. The zxcvbn score is an estimate based on common password patterns, so it is not an exact prediction of how the simulated attacks will perform.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Config variables passed from backend templates
+    window.SELECTED_METHOD = "{{ method }}";
+    window.SIM_RULES = {{ rule_ids|default([], true)|tojson }};
+    window.SIM_MAX_RULES = {{ max_rules|default(2, true)|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/validation.js') }}"></script>
+{% endblock %}

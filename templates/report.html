@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="report-container animate-fade-in">
+    <!-- Banner outcome -->
+    <div id="report-banner" class="report-banner {% if found %}banner-cracked{% else %}banner-limit{% endif %}">
+        <div class="banner-icon">
+            {% if found %}
+                <i id="report-outcome-icon" class="fa-solid fa-lock-open pulsing-glow"></i>
+            {% elif reason == 'stopped' %}
+                <i id="report-outcome-icon" class="fa-solid fa-stop"></i>
+            {% else %}
+                <i id="report-outcome-icon" class="fa-solid fa-user-shield"></i>
+            {% endif %}
+        </div>
+        <div class="banner-text">
+            <h2 id="report-outcome">
+                {% if found %}
+                    PASSWORD CRACKED
+                {% elif reason == 'stopped' %}
+                    SIMULATION STOPPED
+                {% elif reason == 'exhausted' %}
+                    SEARCH EXHAUSTED
+                {% else %}
+                    SIMULATION LIMIT REACHED
+                {% endif %}
+            </h2>
+            <p id="report-summary">
+                {% if found %}
+                    The simulator successfully recovered the test password.
+                {% elif reason == 'stopped' %}
+                    The simulation was stopped before it found the test password.
+                {% elif reason == 'exhausted' %}
+                    The selected candidate list was exhausted without finding the test password.
+                {% else %}
+                    The password successfully resisted the simulated attacks within the limits.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Row -->
+    <div class="report-grid">
+        <!-- Left Column: Attack Details & AI Profile -->
+        <div class="report-left-col">
+            <div class="glass-section report-stats-card">
+                <h3><i class="fa-solid fa-square-poll-vertical"></i> ATTACK SUMMARY</h3>
+                <div class="report-table">
+                    <div class="report-row">
+                        <span class="lbl">Attack Method:</span>
+                        <span class="val font-mono">
+                            <span id="report-method-name">{% if method == 'brute_force' %}Brute Force{% elif method == 'dictionary' %}Dictionary{% elif method == 'rule_based' %}Rule-Based{% elif method == 'hybrid' %}Hybrid{% endif %}</span>
+                        </span>
+                    </div>
+                    <div class="report-row">
+                        <span class="lbl">Password Type:</span>
+                        <span id="report-type" class="val font-mono">{{ ptype }}</span>
+                    </div>
+                    <div class="report-row">
+                        <span class="lbl">Attempts Made:</span>
+                        <span id="report-attempts" class="val font-mono highlight">{{ "{:,}".format(attempts) }}</span>
+                    </div>
+                    <div class="report-row">
+                        <span class="lbl">Time Elapsed:</span>
+                        <span id="report-time" class="val font-mono text-cyan">{{ "{:.3f}".format(time_taken) }} sec</span>
+                    </div>
+                    <div class="report-row">
+                        <span class="lbl">Average Speed:</span>
+                        <span id="report-speed" class="val font-mono text-cyan">{{ "{:,.0f}".format(speed) }} guesses/sec</span>
+                    </div>
+                    <div class="report-row">
+                        <span class="lbl">Theoretical Space:</span>
+                        <span id="report-space" class="val font-mono text-dim">{{ formatted_space }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Rating Dashboard -->
+            <div class="glass-section ai-rating-card">
+                <div class="rating-overall-circle">
+                    <span class="rating-label">AI RATING</span>
+                    <span id="report-overall-rating" class="rating-score">{{ ratings['overall_rating'] }}</span>
+                    <span class="rating-max">/ 10</span>
+                </div>
+                <div class="rating-dimensions-list">
+                    <h3>🛡️ AI SECURITY PROFILE</h3>
+                    
+                    <div class="rating-dim-row">
+                        <span class="dim-name">Security Strength</span>
+                        <div class="dim-bar-bg"><div class="dim-bar-fill strength-fill" style="width: {{ ratings['security_strength']*10 }}%;"></div></div>
+                        <span class="dim-val" data-rating="security_strength">{{ ratings['security_strength'] }}</span>
+                    </div>
+
+                    <div class="rating-dim-row">
+                        <span class="dim-name">Memorability</span>
+                        <div class="dim-bar-bg"><div class="dim-bar-fill memorability-fill" style="width: {{ ratings['memorability']*10 }}%;"></div></div>
+                        <span class="dim-val" data-rating="memorability">{{ ratings['memorability'] }}</span>
+                    </div>
+
+                    <div class="rating-dim-row">
+                        <span class="dim-name">Randomness</span>
+                        <div class="dim-bar-bg"><div class="dim-bar-fill randomness-fill" style="width: {{ ratings['randomness']*10 }}%;"></div></div>
+                        <span class="dim-val" data-rating="randomness">{{ ratings['randomness'] }}</span>
+                    </div>
+
+                    <div class="rating-dim-row">
+                        <span class="dim-name">Pattern Safety</span>
+                        <div class="dim-bar-bg"><div class="dim-bar-fill pattern-fill" style="width: {{ ratings['pattern_safety']*10 }}%;"></div></div>
+                        <span class="dim-val" data-rating="pattern_safety">{{ ratings['pattern_safety'] }}</span>
+                    </div>
+
+                    <div class="rating-dim-row">
+                        <span class="dim-name">Typing Usability</span>
+                        <div class="dim-bar-bg"><div class="dim-bar-fill typing-fill" style="width: {{ ratings['typing_usability']*10 }}%;"></div></div>
+                        <span class="dim-val" data-rating="typing_usability">{{ ratings['typing_usability'] }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: AI Analysis, Strongest/Weakest, & Actions -->
+        <div class="report-right-col">
+            <!-- Strongest / Weakest Panel -->
+            <div class="glass-section aspects-card">
+                <div class="aspect-box strongest-box">
+                    <div class="aspect-header">
+                        <i class="fa-solid fa-circle-check aspect-icon-good"></i>
+                        <h4>STRONGEST ASPECT</h4>
+                    </div>
+                    <h5 id="report-strongest-name">{{ aspects['strongest']['name'] }}</h5>
+                    <p id="report-strongest-description">{{ aspects['strongest']['description'] }}</p>
+                </div>
+                <div class="aspect-box weakest-box">
+                    <div class="aspect-header">
+                        <i class="fa-solid fa-circle-xmark aspect-icon-bad"></i>
+                        <h4>WEAKEST ASPECT</h4>
+                    </div>
+                    <h5 id="report-weakest-name">{{ aspects['weakest']['name'] }}</h5>
+                    <p id="report-weakest-description">{{ aspects['weakest']['description'] }}</p>
+                </div>
+            </div>
+
+            <!-- Dynamic AI Recommendation -->
+            <div class="glass-section recommendation-card">
+                <h3><i class="fa-solid fa-brain pulsing-glow"></i> DYNAMIC AI RECOMMENDATION</h3>
+                <div class="recommendation-content">
+                    <p id="report-recommendation" class="rec-text">{{ recommendation }}</p>
+                </div>
+            </div>
+
+            <!-- Navigation Actions -->
+            <div class="report-actions">
+                <a id="report-try-another" href="{{ url_for('configure', method=method) }}" class="btn-primary glow-btn">
+                    <i class="fa-solid fa-rotate-left"></i> TRY ANOTHER PASSWORD
+                </a>
+                <a href="{{ url_for('attacks') }}" class="btn-secondary">
+                    <i class="fa-solid fa-circle-nodes"></i> BACK TO ATTACK SELECTION
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="report-charts-grid">
+        <div class="glass-section report-chart-card">
+            <h3><i class="fa-solid fa-chart-bar"></i> Attack Method Comparison</h3>
+            <p class="chart-desc">Compares the estimated attempts required to crack this password across methods.</p>
+            <div class="chart-wrapper">
+                <canvas id="methodComparisonChart"></canvas>
+            </div>
+        </div>
+        <div class="glass-section report-chart-card">
+            <h3><i class="fa-solid fa-chart-radar"></i> Security Vector Profile</h3>
+            <p class="chart-desc">Visual mapping of the 5 AI rating dimensions.</p>
+            <div class="chart-wrapper">
+                <canvas id="profileRadarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulation History Table -->
+    <div class="glass-section history-section">
+        <h3><i class="fa-solid fa-clock-rotate-left"></i> SIMULATION RUN HISTORY</h3>
+        <p class="section-desc">A non-sensitive log of simulator sessions saved by the configured backend.</p>
+        <div class="history-table-wrapper">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Type</th>
+                        <th>Method</th>
+                        <th>Attempts</th>
+                        <th>Duration</th>
+                        <th>Result</th>
+                        <th>AI Rating</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                    <!-- Loaded dynamically via API -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/report.js') }}"></script>
+{% endblock %}

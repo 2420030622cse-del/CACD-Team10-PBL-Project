@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ? 'The simulator successfully recovered the test password.'
             : params.reason === 'stopped' ? 'The simulation was stopped before it found the test password.'
                 : params.reason === 'exhausted' ? 'The selected candidate list was exhausted without finding the test password.'
-                    : 'The password successfully resisted the simulated attacks within the configured limits.';
+                : 'No match was found within the configured simulation limits. This does not prove the password is safe.';
         document.getElementById('report-banner').className = `report-banner ${params.found ? 'banner-cracked' : 'banner-limit'}`;
         const outcomeIcon = document.getElementById('report-outcome-icon');
         outcomeIcon.className = params.found

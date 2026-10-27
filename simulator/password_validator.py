@@ -10,11 +10,11 @@ def validate_pin(password):
     return is_valid, reqs
 
 def validate_text(password):
-    """Validates an 8-20 character, letter-based password with optional mutations."""
+    """Validates an 8-20 character printable-ASCII password containing a letter."""
     reqs = [
         {"desc": "8–20 characters", "status": 8 <= len(password) <= 20},
         {"desc": "At least one letter", "status": re.search(r'[a-zA-Z]', password) is not None},
-        {"desc": "No spaces", "status": not any(character.isspace() for character in password)}
+        {"desc": "Printable ASCII only (no spaces)", "status": re.fullmatch(r'[\x21-\x7E]+', password) is not None}
     ]
     is_valid = all(r["status"] for r in reqs)
     return is_valid, reqs
@@ -31,7 +31,7 @@ def validate_mix(password):
         {"desc": "At least 1 letter", "status": letter_count >= 1},
         {"desc": "At least 1 number", "status": digit_count >= 1},
         {"desc": "At least 1 symbol", "status": symbol_count >= 1},
-        {"desc": "No spaces", "status": not any(c.isspace() for c in password)}
+        {"desc": "Printable ASCII only (no spaces)", "status": re.fullmatch(r'[\x21-\x7E]+', password) is not None}
     ]
     is_valid = all(r["status"] for r in reqs)
     return is_valid, reqs

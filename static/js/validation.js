@@ -2,6 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     let currentType = 'PIN'; // Default selection
     let previewRequestSequence = 0;
+    let securityRequestSequence = 0;
     window.SELECTED_TYPE = currentType;
     const passwordInput = document.getElementById('test-password');
     const togglePasswordBtn = document.getElementById('toggle-password');
@@ -49,17 +50,15 @@ document.addEventListener('DOMContentLoaded', () => {
         ],
         'TEXT': [
             { id: 'text-len', desc: '8–20 characters', check: (val) => val.length >= 8 && val.length <= 20 },
-            { id: 'text-chars', desc: 'At least one letter, no spaces', check: (val) => /[a-zA-Z]/.test(val) && !/\s/.test(val) }
+            { id: 'text-chars', desc: 'At least one letter', check: (val) => /[a-zA-Z]/.test(val) },
+            { id: 'text-ascii', desc: 'Printable ASCII only (no spaces)', check: (val) => /^[\x21-\x7E]+$/.test(val) }
         ],
         'MIX': [
             { id: 'mix-len', desc: '8–20 characters', check: (val) => val.length >= 8 && val.length <= 20 },
             { id: 'mix-letter', desc: 'At least 1 letter', check: (val) => /[a-zA-Z]/.test(val) },
             { id: 'mix-num', desc: 'At least 1 number', check: (val) => (val.match(/\d/g) || []).length >= 1 },
-            { id: 'mix-sym', desc: 'At least 1 symbol', check: (val) => {
-                const alnums = val.replace(/[^a-zA-Z0-9\s]/g, '');
-                return val.length - alnums.length >= 1;
-            }},
-            { id: 'mix-spaces', desc: 'No spaces', check: (val) => !/\s/.test(val) }
+            { id: 'mix-sym', desc: 'At least 1 symbol', check: (val) => /[^a-zA-Z0-9]/.test(val) },
+            { id: 'mix-ascii', desc: 'Printable ASCII only (no spaces)', check: (val) => /^[\x21-\x7E]+$/.test(val) }
         ]
     };
 
@@ -67,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     togglePasswordBtn.addEventListener('click', () => {
         const isPassword = passwordInput.getAttribute('type') === 'password';
         passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+        togglePasswordBtn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
         togglePasswordBtn.innerHTML = isPassword 
             ? '<i class="fa-solid fa-eye-slash"></i>' 
             : '<i class="fa-solid fa-eye"></i>';
@@ -74,15 +74,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle Type Card selections
     const typeCards = document.querySelectorAll('.type-card');
-    function setCurrentType(type) {
+    function setCurrentType(type, focusCard = false) {
+        const typeChanged = currentType !== type;
         currentType = type;
         window.SELECTED_TYPE = type;
         typeCards.forEach(c => {
             c.classList.toggle('active', c.getAttribute('data-type') === type);
+            const isSelected = c.getAttribute('data-type') === type;
+            c.setAttribute('aria-checked', String(isSelected));
+            c.setAttribute('tabindex', isSelected ? '0' : '-1');
+            if (focusCard && isSelected) c.focus();
         });
 
+        if (!typeChanged) return;
         renderRequirements();
         updateRuleCategory();
+        securityRequestSequence += 1;
+        resetSecurityPanel();
         passwordInput.value = '';
         runValidation();
     }
@@ -105,9 +113,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    typeCards.forEach(card => {
+    typeCards.forEach((card, index) => {
         card.addEventListener('click', () => {
             setCurrentType(card.getAttribute('data-type'));
+        });
+        card.addEventListener('keydown', event => {
+            const nextIndex = event.key === 'ArrowRight' || event.key === 'ArrowDown'
+                ? (index + 1) % typeCards.length
+                : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+                    ? (index - 1 + typeCards.length) % typeCards.length
+                    : -1;
+            if (nextIndex >= 0) {
+                event.preventDefault();
+                setCurrentType(typeCards[nextIndex].getAttribute('data-type'), true);
+            } else if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setCurrentType(card.getAttribute('data-type'));
+            }
         });
     });
 
@@ -149,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update status badge & button
         if (val.length === 0) {
+            clearTimeout(debounceTimer);
             previewRequestSequence += 1;
             clearTestPassword();
             validationStatus.className = 'validation-status status-invalid';
@@ -169,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetchAiPreview(val);
             }, 300);
         } else {
+            clearTimeout(debounceTimer);
             previewRequestSequence += 1;
             clearTestPassword();
             validationStatus.className = 'validation-status status-invalid';
@@ -252,12 +276,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function analyzePasswordSecurity() {
-        const value = (passwordInput.value || '').trim();
+        const value = passwordInput.value || '';
+        const requestSequence = ++securityRequestSequence;
+        const requestedType = currentType;
         if (!value) {
             resetSecurityPanel();
             return;
         }
 
+        resetSecurityPanel();
         setStatusPill(strengthStatus, 'Analyzing password...', 'neutral');
         setStatusPill(hibpStatusPill, 'Checking breach exposure...', 'neutral');
         strengthWarning.textContent = 'Analyzing password...';
@@ -268,10 +295,16 @@ document.addEventListener('DOMContentLoaded', () => {
             body: { password: value, type: currentType }
         })
         .then(data => {
+            if (requestSequence !== securityRequestSequence ||
+                value !== passwordInput.value ||
+                requestedType !== currentType) return;
             renderSecurityResults(data);
         })
         .catch(error => {
             console.error('Security analysis failed:', error);
+            if (requestSequence !== securityRequestSequence ||
+                value !== passwordInput.value ||
+                requestedType !== currentType) return;
             setStatusPill(strengthStatus, 'Analysis unavailable', 'warning');
             setStatusPill(hibpStatusPill, 'Unable to determine', 'warning');
             strengthWarning.textContent = 'The password analysis service could not be reached.';
@@ -340,13 +373,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Input listeners
-    passwordInput.addEventListener('input', runValidation);
+    passwordInput.addEventListener('input', () => {
+        securityRequestSequence += 1;
+        resetSecurityPanel();
+        runValidation();
+    });
 
     analyzePasswordBtn.addEventListener('click', () => {
         analyzePasswordSecurity();
     });
 
     clearDataBtn.addEventListener('click', () => {
+        clearDataBtn.disabled = true;
         apiFetch('/api/reset-password', { method: 'POST' })
             .then(() => {
                 clearTestPassword();
@@ -354,11 +392,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 runValidation();
                 resetSecurityPanel();
             })
-            .catch(() => {
+            .catch(error => {
+                console.error('Sensitive data reset failed:', error);
                 clearTestPassword();
                 passwordInput.value = '';
                 runValidation();
                 resetSecurityPanel();
+                validationStatus.className = 'validation-status status-invalid';
+                validationStatus.textContent = `STATUS: LOCAL DATA CLEARED; BACKEND RESET FAILED: ${error.message}`;
+            })
+            .finally(() => {
+                clearDataBtn.disabled = false;
             });
     });
     

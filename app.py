@@ -8,7 +8,7 @@ import math
 from simulator.password_validator import validate_password
 from simulator.password_analyzer import analyze_password_preview
 from simulator.statistics import calculate_search_space, format_number, calculate_time_estimate, get_length_growth_data
-from simulator.brute_force import generate_brute_force_batch
+from simulator.brute_force import generate_brute_force_batch, get_charset
 from simulator.dictionary import generate_dictionary_batch
 from simulator.rule_based import DEFAULT_RULES, generate_rule_based_batch_details
 from simulator.hybrid import generate_hybrid_batch
@@ -382,6 +382,7 @@ def api_simulate_step():
         return jsonify({'error': 'No test password configured in session'}), 400
         
     # Dispatch to correct generator
+    attempts_before = state.get('attempts', state.get('index', 0))
     if method == 'brute_force':
         guesses, found, next_state, count = generate_brute_force_batch(ptype, password, state, batch_size, charset)
     elif method == 'dictionary':
@@ -420,6 +421,16 @@ def api_simulate_step():
         } if found else None,
     }
     if method == 'rule_based':
+        response['guess_attempts'] = [record['attempt'] for record in sampled_records]
+    else:
+        sample_offsets = (
+            [round(index * (count - 1) / 14) for index in range(15)]
+            if count > 15 else list(range(len(guesses)))
+        )
+        response['guess_attempts'] = [
+            attempts_before + offset + 1 for offset in sample_offsets
+        ]
+    if method == 'rule_based':
         response['candidate_details'] = sampled_records
         response['result'] = {
             'method': 'Rule Based',
@@ -448,120 +459,58 @@ def api_compare_methods():
     dict_list = get_dictionary_list(ptype)
     dict_space = len(dict_list)
     
-    # 2. Rule-based variations size
-    from simulator.rule_based import get_base_elements, get_word_variations
-    rule_base = get_base_elements(ptype)
-    rule_space = sum(len(get_word_variations(w, ptype)) for w in rule_base)
-    
-    # 3. Hybrid size
-    from simulator.hybrid import COMMON_3_DIGITS
-    if ptype == 'PIN':
-        hybrid_space = len(COMMON_3_DIGITS) * len(COMMON_3_DIGITS) * 2
-    else:
-        # top 15 words comb
-        max_modes = 4 if ptype == 'TEXT' else 5
-        hybrid_space = 15 * 15 * max_modes
-        
-    # 4. Brute force size
-    brute_space, _, _ = calculate_search_space(ptype, len(password))
-    
-    # Find actual attempts or estimate them
-    # Dictionary lookup:
-    dict_attempts = dict_space
-    if password in dict_list:
-        dict_attempts = dict_list.index(password) + 1
-        dict_found = True
-    else:
-        dict_found = False
-        
-    # Rule-based lookup:
-    rule_attempts = 0
-    rule_found = False
-    for w in rule_base:
-        vars = get_word_variations(w, ptype)
-        if password in vars:
-            rule_attempts += vars.index(password) + 1
-            rule_found = True
+    # 2. Count the exact unique candidates produced by the default rule search.
+    rule_space = 0
+    rule_attempts = None
+    rule_state = {}
+    while True:
+        records, _, rule_state, count, _ = generate_rule_based_batch_details(
+            ptype, '', rule_state, batch_size=5000
+        )
+        if rule_attempts is None:
+            match = next((record for record in records if record['candidate'] == password), None)
+            if match:
+                rule_attempts = match['attempt']
+        rule_space += count
+        if rule_state.get('exhausted') or not count:
             break
-        else:
-            rule_attempts += len(vars)
-            
-    # Hybrid lookup:
-    # Just run a fast batch simulator internally to check if it's there
-    hybrid_found = False
-    hybrid_attempts = 0
-    # Simple simulated run
-    # Let's count hybrid space limit
-    if ptype == 'PIN':
-        comp1 = COMMON_3_DIGITS
-        comp2 = COMMON_3_DIGITS
-        max_modes = 2
-    else:
-        comp1 = COMMON_WORDS = [
-            'password', 'admin', 'welcome', 'hello', 'security', 'qwerty', 'computer', 'football', 'letmein', 'test',
-            'pass', 'root', 'login', 'user', 'monkey'
-        ]
-        comp2 = COMMON_WORDS
-        max_modes = 4 if ptype == 'TEXT' else 5
-        
-    idx1, idx2, m = 0, 0, 0
-    hb_c = 0
-    while idx1 < len(comp1) and not hybrid_found:
-        v1 = comp1[idx1]
-        while idx2 < len(comp2) and not hybrid_found:
-            v2 = comp2[idx2]
-            guess = ""
-            if ptype == 'PIN':
-                if m == 0: guess = v1 + v2
-                elif m == 1: guess = v1 + v2[::-1]
-            elif ptype == 'TEXT':
-                w1_low, w2_low = v1.lower(), v2.lower()
-                w1_cap, w2_cap = w1_low.capitalize(), w2_low.capitalize()
-                if m == 0: guess = w1_low + w2_low
-                elif m == 1: guess = w1_cap + w2_cap
-                elif m == 2: guess = w1_low + w2_cap
-                elif m == 3: guess = w1_cap + w2_low
-            elif ptype == 'MIX':
-                w1_low, w2_low = v1.lower(), v2.lower()
-                w1_cap, w2_cap = w1_low.capitalize(), w2_low.capitalize()
-                if m == 0: guess = w1_low + w2_low + "!"
-                elif m == 1: guess = w1_cap + w2_cap + "1"
-                elif m == 2: guess = w1_cap + w2_cap + "123!"
-                elif m == 3: guess = w1_low + "123" + w2_low
-                elif m == 4: guess = w1_low + "123" + w2_low + "!"
-                
-            if ptype == 'PIN' or (8 <= len(guess) <= 20):
-                hb_c += 1
-                if guess == password:
-                    hybrid_found = True
-                    hybrid_attempts = hb_c
-                    break
-            m += 1
-            if m >= max_modes:
-                m = 0
-                idx2 += 1
-        if idx2 >= len(comp2):
-            idx1 += 1
-            idx2 = 0
-            m = 0
-            
+    rule_found = rule_attempts is not None
+    if not rule_found:
+        rule_attempts = rule_space
+
+    # 3. Measure the actual hybrid candidate list and the target's position.
+    hybrid_space = 0
+    hybrid_attempts = None
+    hybrid_state = {}
+    while True:
+        _, found, hybrid_state, count = generate_hybrid_batch(
+            ptype, password, hybrid_state, batch_size=5000
+        )
+        if found and hybrid_attempts is None:
+            hybrid_attempts = hybrid_space + count
+        hybrid_space += count
+        if hybrid_state.get('exhausted') or not count:
+            break
+    hybrid_found = hybrid_attempts is not None
     if not hybrid_found:
         hybrid_attempts = hybrid_space
-        
-    # Brute Force Attempts:
-    # PIN: systematic digits search
-    if ptype == 'PIN':
-        brute_attempts = int(password) + 1
+
+    # 4. Brute force size
+    brute_space, _, _ = calculate_search_space(ptype, len(password))
+    dict_found = password in dict_list
+    dict_attempts = dict_list.index(password) + 1 if dict_found else dict_space
+
+    # Brute force uses fixed-length base-N enumeration, so the exact rank is calculable.
+    charset = get_charset(ptype)
+    if all(character in charset for character in password):
+        brute_index = 0
+        for character in password:
+            brute_index = brute_index * len(charset) + charset.index(character)
+        brute_attempts = brute_index + 1
         brute_found = True
     else:
-        # For TEXT/MIX, systematic brute force is huge.
-        # If it was found by dictionary/rule/hybrid, we can assume it might take years.
-        # Let's set brute_attempts to search space size or show it as practically infinite.
-        # Let's return the theoretical search space size if not found.
-        # Actually, let's calculate exact attempts if length is short (e.g. 1-4 chars)
-        # otherwise return search_space
-        brute_found = False
         brute_attempts = brute_space
+        brute_found = False
         
     return jsonify({
         'methods': ['Brute Force', 'Dictionary', 'Rule-Based', 'Hybrid'],

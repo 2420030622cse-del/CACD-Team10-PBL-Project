@@ -139,12 +139,12 @@ document.addEventListener('DOMContentLoaded', () => {
         logConsoleLines.innerHTML = '';
         if (statLength) statLength.textContent = '-';
         statAttempts.textContent = '0';
-        statSpeed.textContent = String(window.SIM_SPEED);
+        statSpeed.textContent = '—';
         statTime.textContent = '0.0 sec';
         progressPercentLabel.textContent = '0.00%';
         progressBarFill.style.width = '0%';
         const passwordLength = getTestPassword().length;
-        const base = window.SIM_TYPE === 'PIN' ? 10 : window.SIM_TYPE === 'TEXT' ? 52 : 70;
+        const base = window.SIM_TYPE === 'PIN' ? 10 : 94;
         window.THEORETICAL_SPACE = base ** (window.SIM_TYPE === 'PIN' ? 6 : passwordLength);
 
         // Charts Initializations
@@ -232,6 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Set stats values
             statAttempts.textContent = attemptsCount.toLocaleString();
+            const measuredSeconds = (Date.now() - startTimestamp - totalPausedMs) / 1000;
+            statSpeed.textContent = (attemptsCount / Math.max(measuredSeconds, 0.001)).toFixed(1);
 
             // Display current guess (the last one checked in the batch)
             const guesses = data.guesses || [];
@@ -246,7 +248,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const lineClass = isCorrect ? 'log-correct' : 'log-incorrect';
                     const resultSymbol = isCorrect ? '✓' : '✗';
                     const detail = data.candidate_details && data.candidate_details[idx];
-                    const attemptNum = detail && detail.attempt ? detail.attempt : prevAttempts + idx + 1;
+                    const attemptNum = detail && detail.attempt
+                        ? detail.attempt
+                        : data.guess_attempts?.[idx] || prevAttempts + idx + 1;
                     
                     const line = document.createElement('div');
                     line.className = `log-line ${lineClass}`;
@@ -317,11 +321,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         btnGoReport.classList.toggle('hidden', reason === 'error');
         statTime.textContent = `${elapsedSeconds.toFixed(1)} sec`;
+        const actualSpeed = attemptsCount / (elapsedSeconds > 0 ? elapsedSeconds : 1.0);
+        statSpeed.textContent = actualSpeed.toFixed(1);
 
         if (found) {
             if (statLength) statLength.textContent = String(currentGuessText.textContent.length);
-            const actualSpeed = attemptsCount / (elapsedSeconds > 0 ? elapsedSeconds : 1.0);
-            statSpeed.textContent = actualSpeed.toFixed(1);
             guessDisplayBox.className = 'console-box state-correct';
             guessStatusLabel.textContent = '✓ TARGET FOUND';
             statusBadge.className = 'status-badge badge-finished';

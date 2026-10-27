@@ -4,8 +4,7 @@ def calculate_search_space(ptype, length):
     """
     Calculates the theoretical search space size.
     PIN: digits 0-9 (base 10)
-    TEXT: letters A-Z, a-z (base 52)
-    MIX: letters + numbers + symbols (base 70)
+    TEXT/MIX: printable ASCII characters without spaces (base 94)
     """
     if ptype == 'PIN':
         base = 10
@@ -13,12 +12,12 @@ def calculate_search_space(ptype, length):
         chars = 10
         comb = base ** 6
     elif ptype == 'TEXT':
-        base = 52
-        chars = 52
+        base = 94
+        chars = 94
         comb = base ** length
     elif ptype == 'MIX':
-        base = 70
-        chars = 70
+        base = 94
+        chars = 94
         comb = base ** length
     else:
         base = 26
@@ -70,10 +69,8 @@ def get_length_growth_data(ptype, base_length):
     # Determine base size
     if ptype == 'PIN':
         base = 10
-    elif ptype == 'TEXT':
-        base = 52
     else:
-        base = 70
+        base = 94
         
     for l in range(4, 13):
         data.append({

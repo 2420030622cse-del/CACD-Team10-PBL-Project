@@ -33,7 +33,7 @@
                 {% elif reason == 'exhausted' %}
                     The selected candidate list was exhausted without finding the test password.
                 {% else %}
-                    The password successfully resisted the simulated attacks within the limits.
+                    No match was found within the configured simulation limits. This does not prove the password is safe.
                 {% endif %}
             </p>
         </div>
@@ -164,7 +164,7 @@
     <div class="report-charts-grid">
         <div class="glass-section report-chart-card">
             <h3><i class="fa-solid fa-chart-bar"></i> Attack Method Comparison</h3>
-            <p class="chart-desc">Compares the estimated attempts required to crack this password across methods.</p>
+            <p class="chart-desc">Compares the exact position in each method's default candidate order, or the full candidate list if not found.</p>
             <div class="chart-wrapper">
                 <canvas id="methodComparisonChart"></canvas>
             </div>

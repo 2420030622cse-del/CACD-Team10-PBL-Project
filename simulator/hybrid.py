@@ -32,6 +32,7 @@ def generate_hybrid_batch(ptype, target_password, state, batch_size=500):
     if ptype == 'PIN':
         if not state:
             state = {'index1': 0, 'index2': 0, 'mode': 0}
+        attempts = state.get('attempts', 0)
         idx1 = state.get('index1', 0)
         idx2 = state.get('index2', 0)
         mode = state.get('mode', 0)
@@ -50,11 +51,17 @@ def generate_hybrid_batch(ptype, target_password, state, batch_size=500):
             if idx2 >= len(COMMON_3_DIGITS):
                 idx1 += 1
                 idx2 = 0
-        next_state = {'index1': idx1, 'index2': idx2, 'mode': mode}
+        next_state = {
+            'index1': idx1,
+            'index2': idx2,
+            'mode': mode,
+            'attempts': attempts + len(guesses),
+        }
     else:
         passwords = get_common_passwords()
         word_index = state.get('word_index', 0)
         variant_index = state.get('variant_index', 0)
+        attempts = state.get('attempts', 0)
         guesses = []
         found = False
 
@@ -88,6 +95,7 @@ def generate_hybrid_batch(ptype, target_password, state, batch_size=500):
         next_state = {
             'word_index': word_index,
             'variant_index': variant_index,
+            'attempts': attempts + len(guesses),
             'exhausted': word_index >= len(passwords) and not found,
         }
 

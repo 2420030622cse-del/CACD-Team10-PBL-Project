@@ -123,6 +123,7 @@ def generate_dictionary_batch(ptype, target_password, state, batch_size=500):
         state = {'index': 0}
 
     index = state.get('index', 0)
+    attempts = state.get('attempts', index)
     guesses = []
     found = False
     checked_count = 0
@@ -141,12 +142,14 @@ def generate_dictionary_batch(ptype, target_password, state, batch_size=500):
 
     guesses_sample = guesses
     if len(guesses) > 15:
-        step = len(guesses) // 14
-        guesses_sample = []
-        for i in range(14):
-            guesses_sample.append(guesses[i * step])
-        if guesses[-1] not in guesses_sample:
-            guesses_sample.append(guesses[-1])
+        guesses_sample = [
+            guesses[round(sample * (len(guesses) - 1) / 14)]
+            for sample in range(15)
+        ]
 
-    next_state = {'index': index, 'exhausted': index >= len(words) and not found}
+    next_state = {
+        'index': index,
+        'attempts': attempts + checked_count,
+        'exhausted': index >= len(words) and not found,
+    }
     return guesses_sample, found, next_state, len(guesses)

@@ -8,14 +8,13 @@ let methodComparisonChart = null;
 // Helper to determine base alphabet size
 function getBaseForType(ptype) {
     if (ptype === 'PIN') return 10;
-    if (ptype === 'TEXT') return 52;
-    return 70; // MIX
+    return 94;
 }
 
 // 1. RENDER SEARCH SPACE GROWTH (LINE CHART, LOGARITHMIC)
 function renderLengthGrowthChart(canvasId, ptype) {
     const ctx = document.getElementById(canvasId);
-    if (!ctx) return;
+    if (!ctx || typeof Chart === 'undefined') return;
     
     if (lengthGrowthChart) {
         lengthGrowthChart.destroy();
@@ -93,7 +92,7 @@ function renderLengthGrowthChart(canvasId, ptype) {
 // 2. RENDER REAL-TIME PROGRESS TRACE CHART
 function initProgressTraceChart(canvasId) {
     const ctx = document.getElementById(canvasId);
-    if (!ctx) return null;
+    if (!ctx || typeof Chart === 'undefined') return null;
     
     if (progressTraceChart) {
         progressTraceChart.destroy();
@@ -157,7 +156,7 @@ function updateProgressTraceChart(elapsedSec, attemptsCount) {
 // 3. RENDER AI SECURITY PROFILE RADAR CHART
 function renderRadarProfileChart(ratings) {
     const ctx = document.getElementById('profileRadarChart');
-    if (!ctx) return;
+    if (!ctx || typeof Chart === 'undefined') return;
     
     if (profileRadarChart) {
         profileRadarChart.destroy();
@@ -211,7 +210,7 @@ function renderRadarProfileChart(ratings) {
 // 4. RENDER METHOD COMPARISON BAR CHART (BAR, LOG SCALE)
 function renderMethodComparisonChart(comparisonData) {
     const ctx = document.getElementById('methodComparisonChart');
-    if (!ctx) return;
+    if (!ctx || typeof Chart === 'undefined') return;
     
     if (methodComparisonChart) {
         methodComparisonChart.destroy();
@@ -223,7 +222,7 @@ function renderMethodComparisonChart(comparisonData) {
             labels: comparisonData.methods,
             datasets: [
                 {
-                    label: 'Attempts Checked (Theoretical/Actual)',
+                    label: 'Attempts Until Match or Exhaustion',
                     data: comparisonData.attempts_needed,
                     backgroundColor: [
                         'rgba(255, 0, 60, 0.75)',    // BF (Red)
@@ -267,7 +266,7 @@ function renderMethodComparisonChart(comparisonData) {
                         afterBody: function(items) {
                             const index = items[0].dataIndex;
                             const found = comparisonData.found[index];
-                            return found ? "✓ Cracks Password" : "✗ Reaches Search Limit";
+                            return found ? "✓ Cracks Password" : "✗ Candidate list exhausted";
                         },
                         label: function(context) {
                             return `Attempts: ${context.raw.toLocaleString()}`;

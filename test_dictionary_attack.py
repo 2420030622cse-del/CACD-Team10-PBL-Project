@@ -1,16 +1,31 @@
 import unittest
 
-from simulator.brute_force import generate_brute_force_batch
+from simulator.brute_force import generate_brute_force_batch, get_charset
 from simulator.dictionary import generate_dictionary_batch, get_common_passwords, get_dictionary_list
 from simulator.hybrid import generate_hybrid_batch
 from simulator.password_validator import validate_password
 from simulator.rule_based import apply_pin_rules, generate_rule_based_batch, generate_rule_based_batch_details, get_sampled_pins
+from simulator.statistics import calculate_search_space
 
 
 class DictionaryAttackTests(unittest.TestCase):
     def test_pin_validation_accepts_only_ascii_digits(self):
         self.assertTrue(validate_password('123456', 'PIN')[0])
         self.assertFalse(validate_password('١٢٣٤٥٦', 'PIN')[0])
+
+    def test_text_and_mixed_passwords_match_brute_force_character_set(self):
+        self.assertEqual(len(get_charset('TEXT')), 94)
+        self.assertEqual(set(get_charset('TEXT')), set(''.join(chr(code) for code in range(33, 127))))
+        self.assertEqual(get_charset('TEXT'), get_charset('MIX'))
+        self.assertEqual(calculate_search_space('TEXT', 8), (94 ** 8, 94, 94))
+        self.assertEqual(calculate_search_space('MIX', 8), (94 ** 8, 94, 94))
+
+    def test_text_and_mixed_validation_rejects_unsearchable_characters(self):
+        self.assertTrue(validate_password('Password123!', 'TEXT')[0])
+        self.assertFalse(validate_password('Password 123!', 'TEXT')[0])
+        self.assertFalse(validate_password('Password123!é', 'TEXT')[0])
+        self.assertTrue(validate_password('Password1?', 'MIX')[0])
+        self.assertFalse(validate_password('Password1😀', 'MIX')[0])
 
     def test_common_password_dataset_is_loaded(self):
         passwords = get_common_passwords()

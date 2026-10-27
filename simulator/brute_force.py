@@ -1,14 +1,14 @@
 import string
 
+PRINTABLE_CHARSET = string.ascii_letters + string.digits + string.punctuation
+
+
 def get_charset(ptype):
     """Returns the character set corresponding to the password type."""
     if ptype == 'PIN':
         return string.digits
-    elif ptype == 'TEXT':
-        return string.ascii_letters
-    elif ptype == 'MIX':
-        # Alphanumeric + standard special symbols
-        return string.ascii_letters + string.digits + "!@#$%^&*"
+    elif ptype in {'TEXT', 'MIX'}:
+        return PRINTABLE_CHARSET
     return string.ascii_letters
 
 def index_to_string(index, charset, length):

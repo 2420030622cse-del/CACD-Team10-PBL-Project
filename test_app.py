@@ -30,6 +30,47 @@ class ApplicationApiTests(unittest.TestCase):
         })
         self.assertEqual(response.status_code, 400)
 
+    def test_sampled_hybrid_guesses_keep_their_true_attempt_numbers(self):
+        response = self.client.post('/api/simulate-step', json={
+            'password': '999999',
+            'method': 'hybrid',
+            'type': 'PIN',
+            'batch_size': 20,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['count'], 20)
+        self.assertEqual(
+            response.json['guess_attempts'],
+            [round(index * 19 / 14) + 1 for index in range(15)],
+        )
+
+    def test_method_comparison_matches_actual_brute_force_and_hybrid_order(self):
+        response = self.client.post('/api/compare-methods', json={
+            'password': '123123',
+            'type': 'PIN',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json['search_spaces'][0], 1_000_000)
+        self.assertEqual(response.json['search_spaces'][3], 450)
+        self.assertEqual(response.json['attempts_needed'][0], 123124)
+        self.assertEqual(response.json['attempts_needed'][3], 1)
+        self.assertTrue(response.json['found'][0])
+        self.assertTrue(response.json['found'][3])
+
+    def test_text_hybrid_comparison_uses_the_real_candidate_generator(self):
+        from simulator.hybrid import generate_hybrid_batch
+
+        password = 'Password1234!'
+        _, found, _, actual_attempts = generate_hybrid_batch('MIX', password, {}, 5000)
+        self.assertTrue(found)
+        response = self.client.post('/api/compare-methods', json={
+            'password': password,
+            'type': 'MIX',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json['found'][3])
+        self.assertEqual(response.json['attempts_needed'][3], actual_attempts)
+
     def test_brute_force_progress_space_matches_exact_length_candidates(self):
         with patch('app.analyze_password_preview', return_value={'preview': {}}):
             validation = self.client.post('/api/validate', json={'password': '123456', 'type': 'PIN'})
@@ -149,6 +190,26 @@ class ApplicationApiTests(unittest.TestCase):
             'reason': 'exhausted',
         })
         self.assertIn('exhausted its configured candidate list', recommendation)
+        self.assertNotIn('successfully resisted', recommendation)
+
+    def test_limit_recommendation_does_not_claim_password_resistance(self):
+        from ai.recommendation_engine import generate_ai_recommendation
+
+        ratings = {
+            'security_strength': 5.0,
+            'memorability': 5.0,
+            'randomness': 5.0,
+            'pattern_safety': 5.0,
+            'typing_usability': 5.0,
+        }
+        recommendation = generate_ai_recommendation('A_long_test_password_2026!', ratings, {
+            'method': 'Brute Force',
+            'attempts': 5,
+            'time_taken': 1.0,
+            'found': False,
+            'reason': 'limit_reached',
+        })
+        self.assertIn('does not prove the password would resist', recommendation)
         self.assertNotIn('successfully resisted', recommendation)
 
 

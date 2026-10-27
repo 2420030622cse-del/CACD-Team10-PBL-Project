@@ -51,37 +51,39 @@
         <div class="config-left-panel">
             <div class="glass-section">
                 <h3>🎯 Select Password Type</h3>
-                <div class="type-selectors">
-                    <div class="type-card active" data-type="PIN">
+                <p class="section-hint">Use the arrow keys to switch types, then enter your test password.</p>
+                <div class="type-selectors" role="radiogroup" aria-label="Select password type">
+                    <div class="type-card active" data-type="PIN" role="radio" aria-checked="true" tabindex="0">
                         <div class="type-icon">🔢</div>
                         <div class="type-details">
                             <h4>PIN</h4>
                             <p>Exactly 6 digits</p>
                         </div>
                     </div>
-                    <div class="type-card" data-type="TEXT">
+                    <div class="type-card" data-type="TEXT" role="radio" aria-checked="false" tabindex="-1">
                         <div class="type-icon">🔤</div>
                         <div class="type-details">
                             <h4>TEXT</h4>
-                            <p>8–20 characters, based on letters</p>
+                            <p>8–20 printable ASCII characters; at least one letter</p>
                         </div>
                     </div>
-                    <div class="type-card" data-type="MIX">
+                    <div class="type-card" data-type="MIX" role="radio" aria-checked="false" tabindex="-1">
                         <div class="type-icon">🔐</div>
                         <div class="type-details">
                             <h4>MIX</h4>
-                            <p>8–20 characters with a number and symbol</p>
+                            <p>8–20 printable ASCII characters; letter, number, and symbol</p>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>
 
             <div class="glass-section">
                 <h3>🔑 Enter Test Password</h3>
-                <p class="section-hint">The password is kept temporarily in this browser tab and sent to the configured analysis backend when you run a check or simulation. Do not enter a password you use for another account.</p>
+                <p class="section-hint">The password is kept temporarily in this browser tab and sent to the configured analysis backend for the live preview, checks, and simulations. Do not enter a password you use for another account.</p>
                 <div class="input-group">
-                    <input type="password" id="test-password" placeholder="Enter password to test..." autocomplete="off">
-                    <button type="button" id="toggle-password" class="btn-icon">
+                    <input type="password" id="test-password" placeholder="Enter password to test..." autocomplete="off" aria-label="Password to test">
+                    <button type="button" id="toggle-password" class="btn-icon" aria-label="Show password">
                         <i class="fa-solid fa-eye"></i>
                     </button>
                 </div>
@@ -92,7 +94,7 @@
                     <ul id="requirements-list" class="reqs-list">
                         <!-- Filled by JS -->
                     </ul>
-                    <div id="validation-status" class="validation-status status-invalid">
+                    <div id="validation-status" class="validation-status status-invalid" aria-live="polite">
                         STATUS: ENTER PASSWORD
                     </div>
                 </div>
@@ -110,7 +112,7 @@
                         <input type="number" id="max-time" value="{% if method == 'brute_force' %}0{% else %}60{% endif %}" min="0" max="300">
                     </div>
                     <div class="setting-item">
-                        <label for="simulation-speed">Speed (Guesses/sec)</label>
+                        <label for="simulation-speed">Target Speed (Guesses/sec)</label>
                         <select id="simulation-speed">
                             <option value="1">1 (Slow-motion)</option>
                             <option value="10">10 (Visual tracing)</option>

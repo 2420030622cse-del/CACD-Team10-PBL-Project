@@ -106,9 +106,9 @@ def generate_ai_recommendation(password, ratings, attack_results):
         )
     else:
         rec_sentences.append(
-            f"The password successfully resisted the {method} simulation, which reached its configuration limit "
-            f"of {attempts:,} attempts over {time_taken:.2f} seconds without discovering the password. "
-            f"This shows a strong initial defense against the tested attack parameters."
+            f"The {method} simulation reached its configuration limit of {attempts:,} attempts over "
+            f"{time_taken:.2f} seconds without finding the test password. This does not prove the password "
+            "would resist a longer or broader search."
         )
         
     # 2. Add structural analysis sentences

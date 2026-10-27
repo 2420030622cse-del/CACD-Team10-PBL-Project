@@ -4,117 +4,97 @@
 <div class="attacks-container animate-fade-in">
     <div class="section-header">
         <h2 class="section-title"><i class="fa-solid fa-circle-nodes title-icon"></i> Select Attack Methodology</h2>
-        <p class="section-subtitle">Hover over a card to understand the algorithm, then click to proceed with configuration.</p>
+        <p class="section-subtitle">Tap, hover, or focus a card to inspect how it works. Choose SELECT METHOD to configure it.</p>
     </div>
 
     <div class="attack-grid">
-        <!-- Card 1: Brute Force -->
-        <div class="attack-card" data-method="brute_force">
+        <article class="attack-card" data-method="brute_force" tabindex="0" role="group" aria-label="Brute Force method. Press Enter or Space to inspect.">
             <div class="card-inner">
                 <div class="card-front">
                     <div class="card-icon"><i class="fa-solid fa-hammer"></i></div>
                     <h3>🔨 BRUTE FORCE</h3>
                     <p class="card-desc">Systematically tries possible combinations until the test password is found.</p>
-                    <span class="hover-tip"><i class="fa-solid fa-eye"></i> Hover to inspect logic</span>
+                    <span class="hover-tip"><i class="fa-solid fa-eye"></i> Focus or tap to inspect</span>
                 </div>
                 <div class="card-back">
                     <h3>🔨 BRUTE FORCE</h3>
                     <div class="card-details">
-                        <p><strong>How it works:</strong> Systematically cycles through candidates at the selected password length until a match is found.</p>
+                        <p><strong>How it works:</strong> Cycles through every candidate at the selected password length in a fixed order.</p>
                         <div class="example-box">
                             <strong>Example guesses:</strong>
-                            <code>000000</code>
-                            <code>000001</code>
-                            <code>000002</code>
-                            <code>000003</code>
-                            <code class="fade">...</code>
+                            <code>000000</code><code>000001</code><code>000002</code><code>000003</code><code class="fade">...</code>
                         </div>
                     </div>
-                    <button class="btn-select">SELECT METHOD</button>
+                    <button type="button" class="btn-select">SELECT METHOD</button>
                 </div>
             </div>
-        </div>
+        </article>
 
-        <!-- Card 2: Dictionary -->
-        <div class="attack-card" data-method="dictionary">
+        <article class="attack-card" data-method="dictionary" tabindex="0" role="group" aria-label="Dictionary method. Press Enter or Space to inspect.">
             <div class="card-inner">
                 <div class="card-front">
                     <div class="card-icon"><i class="fa-solid fa-book"></i></div>
                     <h3>📖 DICTIONARY</h3>
-                    <p class="card-desc">Tests common words and passwords from a small built-in educational word list.</p>
-                    <span class="hover-tip"><i class="fa-solid fa-eye"></i> Hover to inspect logic</span>
+                    <p class="card-desc">Tests common words and passwords from a bundled, ranked list of up to 10,000 candidates.</p>
+                    <span class="hover-tip"><i class="fa-solid fa-eye"></i> Focus or tap to inspect</span>
                 </div>
                 <div class="card-back">
                     <h3>📖 DICTIONARY</h3>
                     <div class="card-details">
-                        <p><strong>How it works:</strong> Compares the test password against a static database of the most frequently used passwords, names, and patterns.</p>
+                        <p><strong>How it works:</strong> Checks type-appropriate candidates from a bundled list of up to 10,000 commonly used passwords.</p>
                         <div class="example-box">
                             <strong>Example guesses:</strong>
-                            <code>password</code>
-                            <code>admin</code>
-                            <code>welcome</code>
-                            <code>hello</code>
-                            <code class="fade">...</code>
+                            <code>password</code><code>admin</code><code>welcome</code><code>hello</code><code class="fade">...</code>
                         </div>
                     </div>
-                    <button class="btn-select">SELECT METHOD</button>
+                    <button type="button" class="btn-select">SELECT METHOD</button>
                 </div>
             </div>
-        </div>
+        </article>
 
-        <!-- Card 3: Rule-Based -->
-        <div class="attack-card" data-method="rule_based">
+        <article class="attack-card" data-method="rule_based" tabindex="0" role="group" aria-label="Rule-Based method. Press Enter or Space to inspect.">
             <div class="card-inner">
                 <div class="card-front">
                     <div class="card-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
                     <h3>🧩 RULE-BASED</h3>
-                    <p class="card-desc">Generates predictable variations using capitalization, numbers, symbols, and other simple transformations.</p>
-                    <span class="hover-tip"><i class="fa-solid fa-eye"></i> Hover to inspect logic</span>
+                    <p class="card-desc">Generates predictable variations using capitalization, numbers, symbols, and simple transformations.</p>
+                    <span class="hover-tip"><i class="fa-solid fa-eye"></i> Focus or tap to inspect</span>
                 </div>
                 <div class="card-back">
                     <h3>🧩 RULE-BASED</h3>
                     <div class="card-details">
-                        <p><strong>How it works:</strong> Applies pre-configured rules (capitalization shifts, padding, keyboard paths, numbers) to dictionary elements.</p>
+                        <p><strong>How it works:</strong> Applies selected capitalization, number, symbol, and substitution rules to ranked dictionary entries.</p>
                         <div class="example-box">
                             <strong>Example guesses:</strong>
-                            <code>Password</code>
-                            <code>password123</code>
-                            <code>PASSWORD!</code>
-                            <code>p455w0rd!</code>
-                            <code class="fade">...</code>
+                            <code>Password</code><code>password123</code><code>PASSWORD!</code><code>p455w0rd!</code><code class="fade">...</code>
                         </div>
                     </div>
-                    <button class="btn-select">SELECT METHOD</button>
+                    <button type="button" class="btn-select">SELECT METHOD</button>
                 </div>
             </div>
-        </div>
+        </article>
 
-        <!-- Card 4: Password Safety Analysis -->
-        <div class="attack-card" data-method="password_safety">
+        <article class="attack-card" data-method="password_safety" tabindex="0" role="group" aria-label="Password Safety Analysis. Press Enter or Space to inspect.">
             <div class="card-inner">
                 <div class="card-front">
                     <div class="card-icon"><i class="fa-solid fa-shield-heart"></i></div>
                     <h3>🛡️ PASSWORD SAFETY ANALYSIS</h3>
-                    <p class="card-desc">Evaluates how strong, memorable, and risk-prone a password is using local scoring and breach checks.</p>
-                    <span class="hover-tip"><i class="fa-solid fa-eye"></i> Hover to inspect logic</span>
+                    <p class="card-desc">Evaluates strength and risk with the configured analysis backend and a breach check.</p>
+                    <span class="hover-tip"><i class="fa-solid fa-eye"></i> Focus or tap to inspect</span>
                 </div>
                 <div class="card-back">
                     <h3>🛡️ PASSWORD SAFETY ANALYSIS</h3>
                     <div class="card-details">
-                        <p><strong>How it works:</strong> Uses the integrated password validator, AI preview model, zxcvbn strength checks, and HIBP breach lookup to estimate real-world safety.</p>
+                        <p><strong>How it works:</strong> Sends the test password to the configured backend for scoring and uses HIBP's k-anonymity lookup for breach exposure.</p>
                         <div class="example-box">
                             <strong>Example checks:</strong>
-                            <code>Strength</code>
-                            <code>Entropy</code>
-                            <code>Pattern risk</code>
-                            <code>HIBP breach count</code>
-                            <code class="fade">...</code>
+                            <code>Strength</code><code>Entropy</code><code>Pattern risk</code><code>HIBP breach count</code><code class="fade">...</code>
                         </div>
                     </div>
-                    <button class="btn-select">SELECT METHOD</button>
+                    <button type="button" class="btn-select">SELECT METHOD</button>
                 </div>
             </div>
-        </div>
+        </article>
 
     </div>
 </div>

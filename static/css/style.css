@@ -404,6 +404,7 @@ body {
 .attack-card {
     height: 320px;
     cursor: pointer;
+    outline: none;
 }
 
 .card-inner {
@@ -415,8 +416,22 @@ body {
     transform-style: preserve-3d;
 }
 
-.attack-card:hover .card-inner {
+.attack-card:hover .card-inner,
+.attack-card.is-flipped .card-inner,
+.attack-card:focus-within .card-inner {
     transform: rotateY(180deg);
+}
+
+.attack-card:focus-visible {
+    outline: 2px solid var(--neon-cyan);
+    outline-offset: 4px;
+    border-radius: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card-inner {
+        transition: none;
+    }
 }
 
 .card-front, .card-back {
@@ -621,17 +636,25 @@ body {
 }
 
 .type-card {
+    width: 100%;
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--border-glass);
     border-radius: 8px;
     padding: 15px 10px;
     text-align: center;
     cursor: pointer;
+    color: inherit;
+    font: inherit;
 }
 
 .type-card:hover {
     border-color: rgba(255, 255, 255, 0.15);
     background: rgba(255, 255, 255, 0.02);
+}
+
+.type-card:focus-visible {
+    outline: 2px solid var(--neon-cyan);
+    outline-offset: 3px;
 }
 
 .type-card.active {

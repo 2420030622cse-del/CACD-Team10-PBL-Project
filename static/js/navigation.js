@@ -15,7 +15,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.querySelectorAll('.attack-card').forEach(card => {
-        card.addEventListener('click', () => {
+        card.addEventListener('click', event => {
+            if (event.target.closest('.btn-select')) return;
+            card.classList.toggle('is-flipped');
+        });
+        card.addEventListener('keydown', event => {
+            if (event.target !== card || !['Enter', ' '].includes(event.key)) return;
+            event.preventDefault();
+            card.classList.toggle('is-flipped');
+        });
+        card.querySelector('.btn-select').addEventListener('click', event => {
+            event.stopPropagation();
             window.location.href = appUrl('configure', {}, card.dataset.method);
         });
     });
